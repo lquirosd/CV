@@ -1,0 +1,35 @@
+Const batch 100
+Const threads 8
+Const log CIFAR.log
+Data D1 filename ../DataSet/training binary
+Data D2 filename ../DataSet/test binary
+Network N1
+data tr D1
+data ts D2
+layer in CI 5 nz 3 nr 32 nc 32 cr 32 cc 32
+layer c0 C 6 nk 16 kr 3 kc 3 rpad 0 cpad 0 stride 1
+layer p0 MP 2 sizer 2 sizec 2
+layer c1 C 6 nk 32 kr 3 kc 3 rpad 0 cpad 0 stride 1
+layer p1 MP 2 sizer 2 sizec 2
+layer c2 C 6 nk 64 kr 3 kc 3 rpad 0 cpad 0 stride 1
+layer p2 MP 2 sizer 2 sizec 2
+layer f1 F 1 numnodes 128
+layer f2 FO 2 criterion classification autoencoder 0
+link N1 in N1 c0
+link N1 c0 N1 p0
+link N1 p0 N1 c1
+link N1 c1 N1 p1
+link N1 p1 N1 c2
+link N1 c2 N1 p2
+layer f0 R 2 prevlayer N1 p2 local 0
+link N1 f0 N1 f1
+link N1 f1 N1 f2
+END_Network
+command D1 zscore 0
+command D2 zscore 1 D1
+amendment N1 * mu 0.100000
+amendment N1 * bn 1
+amendment N1 in noiser 0.500000
+amendment N1 in noisesd 1.000000
+command N1 train 1 nepoch 100
+END

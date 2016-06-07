@@ -1,0 +1,81 @@
+// CIFAR Convolutional
+
+const {
+threads=4
+batch=100
+log="CIFAR_005.log"
+}
+data {
+  //D1 [filename="minitrain", binary]
+  D1 [filename="../DataSet/training", binary]
+  D2 [filename="../DataSet/test", binary]
+}
+
+
+network N1 { 
+  data tr D1 
+  data ts D2
+
+  CI in [nz=3, nr=32, nc=32]
+
+  C c0 [nk=16, kr=3, kc=3, rpad=1, cpad=1]	  
+  C c01 [nk=16, kr=1, kc=1]	  
+  MP p0[sizer=2,sizec=2]
+  C c10 [nk=32, kr=3, kc=3, rpad=1, cpad=1]	  	 
+  C c11 [nk=32, kr=3, kc=3, rpad=1, cpad=1]	  	 
+  MP p1 [sizer=2,sizec=2]
+  C c2 [nk=64, kr=3, kc=3]		
+  C c20 [nk=64, kr=1, kc=1]		
+  MP p2 [sizer=2,sizec=2]
+  
+  F   fr []	
+
+  F  fc1 [numnodes=1024]
+  F  fc2 [numnodes=512]
+
+  FO fo [classification]
+
+  // Connections
+  in->c0
+  c0->c01
+  c01->p0 
+  p0->c10
+  c10->c11
+  c11->p1
+  p1->c2
+  c2->c20
+  c20->p2
+  //reshape
+  p2->fr
+  fr->fc1
+  fc1->fc2
+  fc2->fo
+
+}
+
+
+script {
+  
+  D1.zscore()
+  D2.zscore(D1)
+
+
+  //N1.mmu=0.005
+  N1.bn=1
+  N1.fc1.drop=0.5
+  N1.fc2.drop=0.5
+
+  N1.in.noiser=0.5
+  N1.in.noisesd=1.0
+
+  //-- 20/30/50
+  N1.mu=0.01
+  N1.train(30)
+
+  N1.mu=0.005
+  N1.train(30)
+
+  N1.mu=0.0025
+  N1.train(30)
+}
+
