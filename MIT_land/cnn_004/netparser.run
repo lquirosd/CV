@@ -1,0 +1,49 @@
+Const batch 100
+Const threads 4
+Const log MIT.log
+Data D1 filename ../DataSet/train64x64.bin binary
+Data D2 filename ../DataSet/test64x64.bin binary
+Network N1
+data tr D1
+data ts D2
+layer in CI 5 nz 3 nr 64 nc 64 cr 48 cc 48
+layer c1 C 6 nk 32 kr 3 kc 3 rpad 1 cpad 1 stride 1
+layer c11 C 6 nk 32 kr 3 kc 3 rpad 1 cpad 1 stride 1
+layer p1 MP 2 sizer 2 sizec 2
+layer nin1 C 6 nk 32 kr 1 kc 1 rpad 0 cpad 0 stride 1
+layer c2 C 6 nk 64 kr 3 kc 3 rpad 0 cpad 0 stride 1
+layer p2 MP 2 sizer 2 sizec 2
+layer nin2 C 6 nk 64 kr 1 kc 1 rpad 0 cpad 0 stride 1
+layer c3 C 6 nk 64 kr 3 kc 3 rpad 0 cpad 0 stride 1
+layer p3 MP 2 sizer 2 sizec 2
+layer f41 F 1 numnodes 1024
+layer f43 FO 2 criterion classification autoencoder 0
+link N1 in N1 c1
+link N1 c1 N1 c11
+link N1 c11 N1 p1
+link N1 p1 N1 nin1
+link N1 nin1 N1 c2
+link N1 c2 N1 p2
+link N1 p2 N1 nin2
+link N1 nin2 N1 c3
+link N1 c3 N1 p3
+layer f40 R 2 prevlayer N1 p3 local 0
+link N1 f40 N1 f41
+link N1 f41 N1 f43
+END_Network
+command D1 zscore 0
+command D2 zscore 1 D1
+amendment N1 in flip 1
+amendment N1 * l2 0.001000
+amendment N1 * bn 1
+amendment N1 f41 drop 0.500000
+amendment N1 * mu 0.010000
+command N1 train 1 nepoch 35
+amendment N1 * mu 0.001000
+command N1 train 1 nepoch 25
+amendment N1 * mu 0.000100
+command N1 train 1 nepoch 25
+amendment N1 * mmu 0.005000
+amendment N1 * mu 0.000100
+command N1 train 1 nepoch 25
+END
